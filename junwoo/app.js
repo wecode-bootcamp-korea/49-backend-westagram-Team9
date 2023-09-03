@@ -17,22 +17,6 @@ const app = express()
 
 app.use(express.json()) // for parsing application/json
 
-// 이제 필요없어! DB로 보내주자!
-// const users = [
-//   {
-//     id: 1,
-//     name: "Rebekah Johnson",
-//     email: "Glover12345@gmail.com",
-//     password: "123qwe",
-//   },
-//   {
-//     id: 2,
-//     name: "Fabian Predovic",
-//     email: "Connell29@gmail.com",
-//     password: "password",
-//   },
-// ];
-
 app.get("/", async(req, res) => {
   try {
     return res.status(200).json({"message": "Welcome to Soheon's server!"})
@@ -48,9 +32,11 @@ app.get('/users', async(req, res) => {
     //DB 소스 변수를 가져오고
     //SELEC id, name, pw FROM users
     const userData = await myDataSource.query(`SELECT id, name, email, password FROM USERS`)
+    //콘솔에 출력 해보기
     console.log(userData)
+    //프론트에 전달
     return res.status(200).json( {
-      "users": userData
+      "USER DATA " : userData
     })
 	} catch (error) {
 		console.log(error)
@@ -76,16 +62,17 @@ app.post("/users", async(req, res) => {
       )
       VALUES(
         '${name}',
-        '${password}'
+        '${password}',
         '${email}'
       )
     `)
     //4. DB data 저장 여부 확인
-
+    console.log('iserted user id', userData.insertId)
+    console.log(await myDataSource.query(`SELECT * FROM users;`))
     //5. send response to FRONTEND
 
-		return res.status(201).json({
-      "users": users
+		return res.status(200).json({
+      "message ": "userCreated"   //정상적으로 생성 되었음을 알려줌
 		})
 	} catch (err) {
 		console.log(err)
@@ -97,10 +84,14 @@ app.post("/users", async(req, res) => {
 // 가장 마지막 user를 삭제하는 엔드포인트
 app.delete("/users", async(req, res) => {
   try {
-    users.pop()
-    console.log(users)
-    return res.status(201).json({
-        "users": users
+    const userDelete = await myDataSource.query(`
+      DELETE FROM users ORDER BY id DESC LIMIT 1;
+    `)
+    // 삭제 여부 확인
+    console.log(await myDataSource.query(`SELECT * FROM users;`))
+    return res.status(200).json({
+        "message": "delete complete!"   //정상적으로 삭제되었음을 알려줌
+        
     })
   } catch (err) {
     console.log(err)
@@ -113,10 +104,13 @@ app.delete("/users", async(req, res) => {
 app.put("/users/1", async(req, res) => {
   try {
     const newName = req.body.data.name
-    users[0].name = newName
-    console.log(users)
+    const userUpdate = await myDataSource.query(`
+      UPDATE users SET name = '${newName}' WHERE id = 1;
+    `)
+    //DB UPDATE 여부 확인 
+    console.log(await myDataSource.query(`SELECT * FROM users;`))
     return res.status(201).json({
-        "users": users
+        "message": "update complete!"
     })
   } catch (err) {
     console.log(err)
