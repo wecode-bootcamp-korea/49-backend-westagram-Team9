@@ -126,6 +126,54 @@ app.put("/users/1", async(req, res) => {
   }
 })
 
+//과제 : 게시글 등록하기
+app.post("/posts", async(req, res) => {
+	try {
+    //1. post 정보를 frontend로 부터 받는다 (프론트가 가지고 요청을 보낸다)
+    const me = req.body;
+    //2. user 정보 확인 한번 해보기
+    console.log("ME: ", me);
+    //3. DB에 정보를 저장
+    const title = me.title;
+    const content = me.content;
+    const user_id = me.user_id;
+    //id, 시간은 자동으로 increase
+    const postData = await myDataSource.query(` 
+      INSERT INTO posts(
+        title,
+        content,
+        user_id
+      )
+      VALUES(
+        '${title}',
+        '${content}',
+        '${user_id}'
+      )
+    `)
+    //4. DB data 저장 여부 확인
+    console.log('iserted user id', postData.insertId)
+    console.log(await myDataSource.query(`SELECT * FROM posts;`))
+    //5. send response to FRONTEND
+
+		return res.status(200).json({
+      "message ": "postCreated"   //정상적으로 생성 되었음을 알려줌
+		})
+	} catch (err) {
+		console.log(err)
+	}
+})
+//과제 : 전체 게시글 조회하기
+
+//과제 : 유저의 게시글 조회하기
+
+//과제 : 게시글 수정하기
+
+//과제 : 게시글 삭제하기
+
+//과제 : 좋아요 누르기
+
+
+
 const server = http.createServer(app) // express app 으로 서버를 만듭니다.
 
 const start = async () => { // 서버를 시작하는 함수입니다.
