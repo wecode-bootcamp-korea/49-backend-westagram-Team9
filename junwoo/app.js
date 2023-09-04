@@ -1,16 +1,25 @@
 const http = require('http')
 const express = require('express')
+const dotenv = require('dotenv')
 const { DataSource } = require('typeorm');  //타입ORM 객체 생성
 const mysql = require("mysql2");
+dotenv.config();
 
-
+// const myDataSource = new DataSource({
+//   type: 'mysql',
+//   host: 'localhost',
+//   port: '3306',
+//   username: 'root',
+//   password: '123',
+//   database: 'westagram'
+// })
 const myDataSource = new DataSource({
-  type: 'mysql',
-  host: 'localhost',
-  port: '3306',
-  username: 'root',
-  password: '123',
-  database: 'westagram'
+  type: process.env.TYPEORM_CONNECTION,
+    host: process.env.TYPEORM_HOST,
+    port: process.env.TYPEORM_PORT,
+    username: process.env.TYPEORM_USERNAME,
+    password: process.env.TYPEORM_PASSWORD,
+    database: process.env.TYPEORM_DATABASE
 })
 
 const app = express()
