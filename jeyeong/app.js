@@ -93,6 +93,26 @@ const getPosts = async (req, res) => {
 
 app.get("/posts", getPosts);
 
+// 5. 유저의 게시글 조회
+const getPostByUserId = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const users = await myDataSource.query(
+      `SELECT users.id AS userId, users.profile_image AS userProfileImage FROM users WHERE users.id = ${id}`
+    );
+    const posts = await myDataSource.query(
+      `SELECT posts.id AS postingId, posts.content AS postingContent FROM posts WHERE posts.user_id = ${id}`
+    );
+
+    users[0].posting = posts;
+
+    return res.status(200).json({ data: users[0] });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+app.get("/posts/:id", getPostById);
 // 과제 3 DELETE
 // 가장 마지막 user를 삭제하는 엔드포인트
 const deleteUser = async (req, res) => {
