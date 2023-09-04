@@ -59,8 +59,20 @@ app.use(cors())
     }
   };
 
+  const getUser = async (req, res) =>{
+    try{
+      const users = await myDataSource.query(
+        'select * from users'
+      );
+      return res.status(201).json({"users" : users})
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   app.get('/', hello);
   app.post('/users', createUser);
+  app.get('/users', getUser);
 
 
 
