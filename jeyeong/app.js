@@ -33,6 +33,8 @@ app.get("/", getIndex);
 // 1. API로 users 화면에 보여주기
 const getUsers = async (req, res) => {
   try {
+    const users = await myDataSource.query(`SELECT * FROM users`);
+    console.log(users);
     return res.status(200).json({
       message: "유저 조회 성공",
       data: users
