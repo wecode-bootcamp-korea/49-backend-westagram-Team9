@@ -45,12 +45,11 @@ const getUsers = async (req, res) => {
 app.get("/users", getUsers);
 
 // 2. user 생성
-let userNum = 3;
 const createUser = async (req, res) => {
   try {
-    const user = req.body;
+    const { name, email, profileImage, password } = req.body;
     await myDataSource.query(
-      `INSERT INTO users (name, email, profile_image, password) VALUES ('${user.name}', '${user.email}', '${user.profile_image}', '${user.password}')`
+      `INSERT INTO users (name, email, profile_image, password) VALUES ('${name}', '${email}', '${profileImage}', '${password}')`
     );
 
     return res.status(201).json({ message: "userCreated" });
@@ -61,18 +60,21 @@ const createUser = async (req, res) => {
 
 app.post("/users", createUser);
 
-/*
-let userNum = 3;
-function makeUser() {
-  users.push({
-    id: userNum,
-    name: `user ${userNum}`,
-    email: `Connell${userNum}@gmail.com`,
-    password: "password"
-  });
-  userNum++;
-}
-*/
+// 3. post 생성
+const createPost = async (req, res) => {
+  try {
+    const { title, content, userId } = req.body;
+    await myDataSource.query(
+      `INSERT INTO posts (title, content, user_id) VALUES ('${title}', '${content}', '${userId}')`
+    );
+
+    return res.status(201).json({ message: "postCreated" });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+app.post("/posts", createPost);
 
 // post 보기
 const getPosts = async (req, res) => {
@@ -87,39 +89,6 @@ const getPosts = async (req, res) => {
 };
 
 app.get("/posts", getPosts);
-
-// 3. post 생성
-let postNum = 3;
-const createPost = async (req, res) => {
-  try {
-    const post = req.body;
-    posts.push({
-      id: postNum++,
-      title: post.title,
-      content: post.content,
-      userId: post.userId
-    });
-
-    return res.status(201).json({ message: "postCreated" });
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-app.post("/posts", createPost);
-
-/*
-let postNum = 3;
-function makePost() {
-  posts.push({
-    id: postNum,
-    title: "간단한 HTTP API 개발 시작!",
-    content: "Node.js에 내장되어 있는 http 모듈을 사용해서 HTTP server를 구현.",
-    userId: 2
-  });
-  postNum++;
-}
-*/
 
 // 과제 3 DELETE
 // 가장 마지막 user를 삭제하는 엔드포인트
