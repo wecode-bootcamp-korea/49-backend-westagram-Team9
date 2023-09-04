@@ -34,7 +34,7 @@ app.get("/", getIndex);
 const getUsers = async (req, res) => {
   try {
     const users = await myDataSource.query(`SELECT * FROM users`);
-    console.log(users);
+
     return res.status(200).json({
       message: "유저 조회 성공",
       data: users
@@ -78,13 +78,14 @@ const createPost = async (req, res) => {
 
 app.post("/posts", createPost);
 
-// post 보기
+// 4. post 보기
 const getPosts = async (req, res) => {
   try {
-    return res.status(200).json({
-      message: "게시글 조회 성공",
-      data: posts
-    });
+    const posts = await myDataSource.query(
+      `SELECT posts.user_id AS userId, users.profile_image AS userProfileImage, posts.id AS postingId, posts.content AS postingContent FROM posts INNER JOIN users ON users.id = user_id`
+    );
+
+    return res.status(200).json({ data: posts });
   } catch (error) {
     console.log(error);
   }
