@@ -7,7 +7,7 @@ const dotenv = require("dotenv");
 require('dotenv').config();
 
 
-
+//주석
 
 const myDataSource = new DataSource({
  type: process.env.DB_TYPE,
