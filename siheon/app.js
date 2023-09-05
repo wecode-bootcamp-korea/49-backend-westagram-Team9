@@ -34,8 +34,8 @@ app.get("/", async(req, res) => {
 //1. API 로 users 화면에 보여주기
 const getUsers = async(req, res) => {
   
-  const userData = await myDataSource.query(`SELECT * FROM USERS`)
   try {  
+    const userData = await myDataSource.query(`SELECT * FROM USERS`)
     return res.status(200).json( { userData
     })
 	} catch (error) {
@@ -62,6 +62,29 @@ request body에서 사용자 정보를 받아와서 만듭니다.*/
 const createUser = async(req, res) => {
   try {
      const { name, email, password, profile_image} = req.body
+
+     //1.email, password, name 다 입력되지 않은경우
+     if (!email || !name || !password){
+      const error = new Error("KEY_ERROR")
+      error.statusCode=400
+      throw error
+     }
+
+     //2.비밀번호가 너무 짧을때
+     if (password.length < 8){
+      const error = new Error("INVALID_PASSWORD")
+      error.statusCode=400
+      throw error
+     }
+
+     //3.이메일이 중복되어 이미 가입된경우
+    const emailData = await myDataSource.query(`SELECT users.email FROM users WHERE users.email='${email}'`)
+     if (emailData==ㄹ ){
+      const error = new Error("DUPLICATED_EMAIL_ADDRESS")
+      error.statusCode=400
+      throw error
+     }
+
      await myDataSource.query(`INSERT INTO users (name, email, profile_image, password) VALUES ('${name}', '${email}', '${profile_image}', '${password}')`)
     const userData = await myDataSource.query(`SELECT * FROM USERS`)
     console.log(userData)
