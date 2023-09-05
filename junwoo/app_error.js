@@ -48,7 +48,10 @@ app.get('/users', async(req, res) => {
       "USER DATA " : userData
     })
 	} catch (error) {
-		console.log(error)
+		console.log(error)  //무슨 에러인지 알아야 디버깅이 가능하다.
+    return res.status(500).json({ //500은 서버 문제를 의미
+      "message" : "UNKNOWN_SERVER_ERROR"  //프론트에게도 오류 상황에 대해서 안내한다.
+    })
 	}
 })
 //2. users 생성
@@ -62,6 +65,16 @@ app.post("/users", async(req, res) => {
     const name = me.name
     const password = me.password
     const email = me.email
+    // ** 여기서 예외 처리를 실행한다!  
+    // 이메일 중복 확인 
+
+    // 비밀번호 길이 체크
+    if (password.length < 8 ){
+      const error = new Error("INVAILD_PASSWORD")
+      error.statusCode = 400
+      throw error
+    }
+  //비밀번호에 특수 문자가 없을 때
 
     const userData = await myDataSource.query(`
       INSERT INTO users(
@@ -148,7 +161,7 @@ app.post("/posts", async(req, res) => {
         '${title}',
         '${content}',
         '${user_id}'
-      );
+      )
     `)
     //4. DB data 저장 여부 확인
     console.log('iserted user id', postData.insertId)
@@ -168,7 +181,7 @@ app.get('/posts', async(req, res) => {
     //이제 쿼리문을 작성해보자
     //DB 소스 변수를 가져오고
     //SELECT * FROM posts
-    const postData = await myDataSource.query(`SELECT * FROM posts;`)
+    const postData = await myDataSource.query(`SELECT * FROM posts`)
     //콘솔에 출력 해보기
     console.log(postData)
     //프론트에 전달
@@ -190,10 +203,9 @@ app.get('/posts/user', async(req, res) => {
     const postData = await myDataSource.query(`
     SELECT users.name, posts.title, posts.content, posts.created_at 
     FROM posts 
-    INNER JOIN users ON users.id = posts.user_id
-    WHERE users.name LIKE '${user_name}';
+    LEFT JOIN users ON users.id = posts.user_id 
+    WHERE users.name LIKE '%user_name%'
     `)
-    // 백틱 내부에 변수 선언 방법 ~ Insert into를 확인 해봤어야한다
     //콘솔에 출력 해보기
     console.log(postData)
     //프론트에 전달
