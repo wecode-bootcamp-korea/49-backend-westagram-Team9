@@ -7,7 +7,7 @@ const dotenv = require("dotenv");
 require('dotenv').config();
 
 
-//주석adsfasf
+
 
 const myDataSource = new DataSource({
  type: process.env.DB_TYPE,
@@ -59,6 +59,7 @@ app.use(cors())
     }
   };
 
+// get user
   const getUser = async (req, res) =>{
     try{
       const users = await myDataSource.query(
@@ -73,6 +74,86 @@ app.use(cors())
   app.get('/', hello);
   app.post('/users', createUser);
   app.get('/users', getUser);
+
+
+//////////////////////////////////////
+
+app.post("/users", async(req, res) => {
+	try {
+    // 1. user 정보를 frontend로부터 받는다. (프론트가 사용자 정보를 가지고, 요청을 보낸다) 
+    const me = req.body
+    
+
+    // 3. DATABASE 정보 저장.
+    
+
+    const { name, password, email } = me //구조분해할당
+    // const name = me.name // 다나
+    // const password = me.password // 비밀번호
+    // const email = me.email // email
+
+
+    // email, name, password가 다 입력되지 않은 경우
+    if (email === undefined || name === undefined || password === undefined) {
+      const error = new Error("KEY_ERROR")
+      error.statusCode = 400
+      throw error
+    }
+
+    // (필수) 비밀번호가 너무 짧을 때
+    if (password.length < 8) {
+      const error = new Error("INVALID_PASSWORD")
+      error.statusCode = 400
+      throw error
+    }
+
+    // (심화, 진행) 이메일이 중복되어 이미 가입한 경우
+    const a = await myDataSource.query(
+   `SELECT * FROM users WHERE email LIKE '${email}'`);
+    // 있으면 꺼져라 있으면 truthy 없으면 falsy
+    if (a.length) {
+      const error = new Error("DUPLICATED_EMAIL_ADDRESS")
+      error.statusCode = 400
+      throw error
+    }
+
+    // (심화, 선택) 비밀번호에 특수문자 없을 때
+  
+    const regExp = /[\{\}\[\]\/?.,;:|\)*~`!^\-_+<>@\#$%&\\\=\(\'\"]/g;
+    if (!regExp.test(password))
+     {
+      const error = new Error("")
+      error.statusCode = 400
+      throw error
+    }
+
+    const userData = await myDataSource.query(`
+      INSERT INTO users (
+        name, 
+        password,
+        email
+      )
+      VALUES (
+        '${name}',
+        '${password}', 
+        '${email}'
+      )
+    `)
+
+    // 5. send response to FRONTEND
+		return res.status(201).json({
+      "message": "userCreated" 
+		})
+	} catch (error) {
+		console.log(error)
+    return res.status(error.statusCode).json({
+      "message": error.message
+    })
+	}
+})
+
+
+
 
 
 
