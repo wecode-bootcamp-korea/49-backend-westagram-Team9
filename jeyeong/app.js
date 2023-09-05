@@ -120,7 +120,7 @@ const updatePost = async (req, res) => {
     const { userId, content: newContent } = req.body;
     const { id } = req.params;
 
-    const hasUpdate = await myDataSource.query(
+    const hasUpdated = await myDataSource.query(
       `UPDATE posts SET content = '${newContent}' WHERE id = ${id} and user_id = ${userId}`
     );
 
@@ -139,19 +139,22 @@ const updatePost = async (req, res) => {
 
 app.put("/posts/:id", updatePost);
 
-// 과제 3 DELETE
-// 가장 마지막 user를 삭제하는 엔드포인트
-const deleteUser = async (req, res) => {
+// 7. 게시글 삭제하기
+const deletePost = async (req, res) => {
   try {
-    users.pop();
+    const { id } = req.params;
 
-    return res.status(200).json({ message: "userDeleted" });
+    const hasDeleted = await myDataSource.query(`DELETE FROM posts WHERE id = ${id}`);
+
+    if (hasDeleted.affectedRows === 0) return res.status(400).json({ message: "Delete failed" });
+
+    return res.status(200).json({ message: "postingDeleted" });
   } catch (err) {
     console.log(err);
   }
 };
 
-app.delete("/users", deleteUser);
+app.delete("/posts/:id", deletePost);
 
 const server = http.createServer(app);
 
