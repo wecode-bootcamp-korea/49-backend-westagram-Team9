@@ -125,7 +125,7 @@ const updatePost = async (req, res) => {
     );
 
     // 나중에 예외추가
-    if (hasUpdate.affectedRows === 0) return res.status(400).json({ message: "Update failed" });
+    if (!hasUpdated.affectedRows) return res.status(400).json({ message: "Update failed" });
 
     const post = await myDataSource.query(
       `SELECT posts.user_id, users.name AS userName, posts.id AS postingId, posts.title AS postingTitle, posts.content AS postingContent FROM posts INNER JOIN users ON posts.user_id = users.id WHERE posts.id = ${id} and posts.user_id = ${userId}`
@@ -146,7 +146,7 @@ const deletePost = async (req, res) => {
 
     const hasDeleted = await myDataSource.query(`DELETE FROM posts WHERE id = ${id}`);
 
-    if (hasDeleted.affectedRows === 0) return res.status(400).json({ message: "Delete failed" });
+    if (!hasDeleted.affectedRows) return res.status(400).json({ message: "Delete failed" });
 
     return res.status(200).json({ message: "postingDeleted" });
   } catch (err) {
