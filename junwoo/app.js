@@ -163,9 +163,40 @@ app.post("/posts", async(req, res) => {
 	}
 })
 //과제 : 전체 게시글 조회하기
-
+app.get('/posts', async(req, res) => {
+	try {
+    //이제 쿼리문을 작성해보자
+    //DB 소스 변수를 가져오고
+    //SELECT * FROM posts
+    const postData = await myDataSource.query(`SELECT * FROM posts`)
+    //콘솔에 출력 해보기
+    console.log(postData)
+    //프론트에 전달
+    return res.status(200).json( {
+      "POST DATA " : postData
+    })
+	} catch (error) {
+		console.log(error)
+	}
+})
 //과제 : 유저의 게시글 조회하기
-
+app.get('/posts/user', async(req, res) => {
+	try {
+    //이제 쿼리문을 작성해보자
+    //DB 소스 변수를 가져오고
+    const user_name = req.body.name
+    //SELECT * FROM posts
+    const postData = await myDataSource.query(`SELECT users.name, posts.title, posts.content, posts,create_at FROM posts LEFT JOIN users on user.id = post.user_id WHERE users.name LIKE '%user_name%'`)
+    //콘솔에 출력 해보기
+    console.log(postData)
+    //프론트에 전달
+    return res.status(200).json( {
+      "USER POST DATA " : postData
+    })
+	} catch (error) {
+		console.log(error)
+	}
+})
 //과제 : 게시글 수정하기
 
 //과제 : 게시글 삭제하기
