@@ -3,6 +3,7 @@ const express = require('express')
 const dotenv = require('dotenv')
 const { DataSource } = require('typeorm');  //타입ORM 객체 생성
 const mysql = require("mysql2");
+const { errorMonitor } = require('events');
 dotenv.config();
 
 // const myDataSource = new DataSource({
@@ -65,16 +66,58 @@ app.post("/users", async(req, res) => {
     const name = me.name
     const password = me.password
     const email = me.email
-    // ** 여기서 예외 처리를 실행한다!  
-    // 이메일 중복 확인 
-
-    // 비밀번호 길이 체크
-    if (password.length < 8 ){
-      const error = new Error("INVAILD_PASSWORD")
+    // const {name, password, email} = me   위의 선언과 같은 의미 대신 객체선언값이 같아야한다! // 구조분해할당
+    
+    // 예외 처리 시작
+    // 위 세개의 값이 다 입력 되었는지?
+    if (email === undefined || name === undefined || password === undefined) {
+      const error = new Error("KEY_ERROR")
       error.statusCode = 400
       throw error
     }
-  //비밀번호에 특수 문자가 없을 때
+    //key값이 안들어 간 것과 key 자체가 들어가지 않았을 때 둘은 다른 오류다
+    // {
+    //   "name": "JasonPark",
+    //   "password": "123123"
+    // } 이것은 undefined가 되고
+    // 이것과
+    // {
+    //   "name": "JasonPark",
+    //   "password": "123123"
+    //   "email" : "",
+    // } 이것은 비어있다고 표현 된다.
+    // 이 둘은 다른 오류라는 뜻이다.
+
+    // (필수) 비밀번호가 너무 짧을 때
+    if (password.length < 8) {
+      const error = new Error("INVALID_PASSWORD")
+      error.statusCode = 400
+      throw error
+    }
+
+    // (심화, 진행) 이메일이 중복되어 이미 가입한 경우
+    // DB 접근해서 이메일 검색해서 객체로 저장
+    const emaildata = await myDataSource.query(`
+      SELECT email  
+      FROM users
+      WHERE email LIKE '${email}';
+    `)
+    // 객체가 비어있다면 중복되는 이메일 없음 하지만 하나라도 있다면 중복
+    if (!(Object.keys(emaildata).length === 0)) {
+      const error = new Error("DUPLICATED_EMAIL_ADDRESS")
+      error.statusCode = 400
+      throw error
+    }
+
+    // (심화, 선택) 비밀번호에 특수문자 없을 때
+    // 특수 문자열 선언
+    var s_parttern = /[`~!@#$%^&*|\\\'\";:\/?]/gi;
+    // 특수문자 확인후 에러확인
+    if (!(s_parttern.test(password)) ) {
+      const error = new Error("INVALID_PASSWORD_SPECIAL")
+      error.statusCode = 400
+      throw error
+    }
 
     const userData = await myDataSource.query(`
       INSERT INTO users(
