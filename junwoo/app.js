@@ -205,7 +205,36 @@ app.get('/posts/user', async(req, res) => {
 	}
 })
 //과제 : 게시글 수정하기
+app.put("/posts/user", async(req, res) => {
+	try {
+    //1. post 정보를 frontend로 부터 받는다 (프론트가 가지고 요청을 보낸다)
+    const me = req.body;
+    //2. user 정보 확인 한번 해보기
+    console.log("ME: ", me);
+    //3. DB에 정보를 저장
+    // 1번 유저의 1번 포스팅 그리고 컨텐츠 아래와 같은 형식으로 온다고 가정하자
+    // {
+    //   "user_id" : 1,
+    //   "posting_id" : 1,  post번호를 직접 받아온다.
+    //   "content": "바뀐 컨텐츠 입니다..."
+    // }
+    const {user_id, posting_id, content} = me
 
+    const postData = await myDataSource.query(`
+    UPDATE posts SET content = '${content}' WHERE id = '${posting_id}';
+  `)
+    //4. DB data 저장 여부 확인
+    const post = await myDataSource.query(`SELECT * FROM posts WHERE id = '${posting_id}';`)
+    console.log(post)
+    //5. send response to FRONTEND
+
+		return res.status(200).json({
+      "message ": post  //정상적으로 생성 되었음을 알려줌
+		})
+	} catch (err) {
+		console.log(err)
+	}
+})
 //과제 : 게시글 삭제하기
 
 //과제 : 좋아요 누르기
