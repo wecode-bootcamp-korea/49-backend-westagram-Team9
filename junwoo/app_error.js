@@ -218,13 +218,49 @@ app.post("/posts", async(req, res) => {
 		console.log(err)
 	}
 })
+//과제 : 게시글 등록하기
+app.post("/posts", async(req, res) => {
+	try {
+    //1. post 정보를 frontend로 부터 받는다 (프론트가 가지고 요청을 보낸다)
+    const me = req.body;
+    //2. user 정보 확인 한번 해보기
+    console.log("ME: ", me);
+    //3. DB에 정보를 저장
+    const title = me.title;
+    const content = me.content;
+    const user_id = me.user_id;
+    //id, 시간은 자동으로 increase
+    const postData = await myDataSource.query(` 
+      INSERT INTO posts(
+        title,
+        content,
+        user_id
+      )
+      VALUES(
+        '${title}',
+        '${content}',
+        '${user_id}'
+      );
+    `)
+    //4. DB data 저장 여부 확인
+    console.log('iserted user id', postData.insertId)
+    console.log(await myDataSource.query(`SELECT * FROM posts;`))
+    //5. send response to FRONTEND
+
+		return res.status(200).json({
+      "message ": "postCreated"   //정상적으로 생성 되었음을 알려줌
+		})
+	} catch (err) {
+		console.log(err)
+	}
+})
 //과제 : 전체 게시글 조회하기
 app.get('/posts', async(req, res) => {
 	try {
     //이제 쿼리문을 작성해보자
     //DB 소스 변수를 가져오고
     //SELECT * FROM posts
-    const postData = await myDataSource.query(`SELECT * FROM posts`)
+    const postData = await myDataSource.query(`SELECT * FROM posts;`)
     //콘솔에 출력 해보기
     console.log(postData)
     //프론트에 전달
@@ -246,9 +282,10 @@ app.get('/posts/user', async(req, res) => {
     const postData = await myDataSource.query(`
     SELECT users.name, posts.title, posts.content, posts.created_at 
     FROM posts 
-    LEFT JOIN users ON users.id = posts.user_id 
-    WHERE users.name LIKE '%user_name%'
+    INNER JOIN users ON users.id = posts.user_id
+    WHERE users.name LIKE '${user_name}';
     `)
+    // 백틱 내부에 변수 선언 방법 ~ Insert into를 확인 해봤어야한다
     //콘솔에 출력 해보기
     console.log(postData)
     //프론트에 전달
@@ -260,12 +297,76 @@ app.get('/posts/user', async(req, res) => {
 	}
 })
 //과제 : 게시글 수정하기
+app.put("/posts/user", async(req, res) => {
+	try {
+    //1. post 정보를 frontend로 부터 받는다 (프론트가 가지고 요청을 보낸다)
+    const me = req.body;
+    //2. user 정보 확인 한번 해보기
+    console.log("ME: ", me);
+    //3. DB에 정보를 저장
+    // 1번 유저의 1번 포스팅 그리고 컨텐츠 아래와 같은 형식으로 온다고 가정하자
+    // {
+    //   "user_id" : 1,
+    //   "posting_id" : 1,  post번호를 직접 받아온다.
+    //   "content": "바뀐 컨텐츠 입니다..."
+    // }
+    const {user_id, posting_id, content} = me
 
+    const postData = await myDataSource.query(`
+    UPDATE posts SET content = '${content}' WHERE id = '${posting_id}';
+  `)
+    //4. DB data 저장 여부 확인
+    const post = await myDataSource.query(`SELECT * FROM posts WHERE id = '${posting_id}';`)
+    console.log(post)
+    //5. send response to FRONTEND
+
+		return res.status(200).json({
+      "message ": post  //정상적으로 생성 되었음을 알려줌
+		})
+	} catch (err) {
+		console.log(err)
+	}
+})
 //과제 : 게시글 삭제하기
-
+app.delete("/posts", async(req, res) => {
+  try {
+    // 맨 마지막 posts를 제거 한다.
+    const userDelete = await myDataSource.query(`
+      DELETE FROM posts ORDER BY id DESC LIMIT 1;
+    `)
+    // 삭제 여부 확인
+    console.log(await myDataSource.query(`SELECT * FROM posts;`))
+    return res.status(200).json({
+        "message": "posting delete!"   //정상적으로 삭제되었음을 알려줌
+        
+    })
+  } catch (err) {
+    console.log(err)
+  }
+})
 //과제 : 좋아요 누르기
-
-
+app.get("/like", async(req,res) =>{
+  try{
+    const {user_id, post_id} = req.body;
+    const likepost = await myDataSource.query(`
+      INSERT INTO likes (
+        user_id,
+        post_id
+      )
+      VALUES(
+        '${user_id}',
+        '${post_id}'
+      );
+    `)
+    // console.log(await myDataSource.query(`SELECT * FROM likes;`))
+    return res.status(200).json({
+      "message": "likes create!"   //정상적으로 삭제되었음을 알려줌
+      
+  })
+  }catch(err){
+    console.log(err)
+  }
+})
 
 const server = http.createServer(app) // express app 으로 서버를 만듭니다.
 
