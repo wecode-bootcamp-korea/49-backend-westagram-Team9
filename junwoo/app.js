@@ -253,6 +253,28 @@ app.delete("/posts", async(req, res) => {
   }
 })
 //과제 : 좋아요 누르기
+app.get("/like", async(req,res) =>{
+  try{
+    const {user_id, post_id} = req.body;
+    const likepost = await myDataSource.query(`
+      INSERT INTO likes (
+        user_id,
+        post_id
+      )
+      VALUES(
+        '${user_id}',
+        '${post_id}'
+      );
+    `)
+    // console.log(await myDataSource.query(`SELECT * FROM likes;`))
+    return res.status(200).json({
+      "message": "likes create!"   //정상적으로 삭제되었음을 알려줌
+      
+  })
+  }catch(err){
+    console.log(err)
+  }
+})
 
 
 
