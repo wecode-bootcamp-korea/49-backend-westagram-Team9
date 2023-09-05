@@ -156,6 +156,22 @@ const deletePost = async (req, res) => {
 
 app.delete("/posts/:id", deletePost);
 
+// 8. 좋아요 누르기
+const createLike = async (req, res) => {
+  try {
+    const { id: postId } = req.params;
+    const { userId } = req.body;
+
+    await myDataSource.query(`INSERT INTO likes (user_id, post_id) VALUES (${userId}, ${postId})`);
+
+    return res.status(200).json({ message: "likeCreated" });
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+app.post("/likes/:id", createLike);
+
 const server = http.createServer(app);
 
 const start = async () => {
