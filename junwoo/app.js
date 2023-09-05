@@ -236,7 +236,22 @@ app.put("/posts/user", async(req, res) => {
 	}
 })
 //과제 : 게시글 삭제하기
-
+app.delete("/posts", async(req, res) => {
+  try {
+    // 맨 마지막 posts를 제거 한다.
+    const userDelete = await myDataSource.query(`
+      DELETE FROM posts ORDER BY id DESC LIMIT 1;
+    `)
+    // 삭제 여부 확인
+    console.log(await myDataSource.query(`SELECT * FROM posts;`))
+    return res.status(200).json({
+        "message": "posting delete!"   //정상적으로 삭제되었음을 알려줌
+        
+    })
+  } catch (err) {
+    console.log(err)
+  }
+})
 //과제 : 좋아요 누르기
 
 
