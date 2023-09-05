@@ -112,7 +112,33 @@ const getPostByUserId = async (req, res) => {
   }
 };
 
-app.get("/posts/:id", getPostById);
+app.get("/posts/:id", getPostByUserId);
+
+// 6. 게시글 수정하기
+const updatePost = async (req, res) => {
+  try {
+    const { userId, content: newContent } = req.body;
+    const { id } = req.params;
+
+    const hasUpdate = await myDataSource.query(
+      `UPDATE posts SET content = '${newContent}' WHERE id = ${id} and user_id = ${userId}`
+    );
+
+    // 나중에 예외추가
+    if (hasUpdate.affectedRows === 0) return res.status(400).json({ message: "Update failed" });
+
+    const post = await myDataSource.query(
+      `SELECT posts.user_id, users.name AS userName, posts.id AS postingId, posts.title AS postingTitle, posts.content AS postingContent FROM posts INNER JOIN users ON posts.user_id = users.id WHERE posts.id = ${id} and posts.user_id = ${userId}`
+    );
+
+    return res.status(200).json({ data: post });
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+app.put("/posts/:id", updatePost);
+
 // 과제 3 DELETE
 // 가장 마지막 user를 삭제하는 엔드포인트
 const deleteUser = async (req, res) => {
@@ -126,24 +152,6 @@ const deleteUser = async (req, res) => {
 };
 
 app.delete("/users", deleteUser);
-
-// 과제 4 UPDATE
-// 1번 user의 이름을 'Code Kim'으로 바꾸어 보세요.
-const updateUser = async (req, res) => {
-  try {
-    const newName = req.body.name;
-    const userId = req.params.id;
-
-    const findUser = users.find((user) => user.id == userId);
-    findUser.name = newName;
-
-    return res.status(200).json({ message: "userUpdated" });
-  } catch (err) {
-    console.log(err);
-  }
-};
-
-app.put("/users/:id", updateUser);
 
 const server = http.createServer(app);
 
