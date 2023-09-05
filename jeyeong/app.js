@@ -50,6 +50,37 @@ app.get("/users", getUsers);
 const createUser = async (req, res) => {
   try {
     const { name, email, profileImage, password } = req.body;
+
+    // email, name, password가 다 입력되지 않은 경우
+    if (!email || !name || !password) {
+      const error = new Error("KEY_ERROR");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // 비밀번호가 너무 짧을 때 (8자리 이상만 가능)
+    if (password.length < 8) {
+      const error = new Error("INVALID_PASSWORD");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // 이메일이 중복되어 이미 가입한 경우
+    const users = await myDataSource.query(`SELECT * FROM users WHERE email = '${email}'`);
+    if (users.length) {
+      const error = new Error("DUPLICATED_EMAIL_ADDRESS");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // 비밀번호에 특수문자 없을 때
+    const hasSpecialChar = /[\{\}\[\]\/?.,;:|\)*~`!^\-_+<>@\#$%&\\\=\(\'\"]/g;
+    if (!hasSpecialChar.test(password)) {
+      const error = new Error("NO_SPECIAL_CHARACTERS");
+      error.statusCode = 400;
+      throw error;
+    }
+
     await myDataSource.query(
       `INSERT INTO users (name, email, profile_image, password) VALUES ('${name}', '${email}', '${profileImage}', '${password}')`
     );
@@ -57,6 +88,9 @@ const createUser = async (req, res) => {
     return res.status(201).json({ message: "userCreated" });
   } catch (error) {
     console.log(error);
+    return res.status(error.statusCode).json({
+      message: error.message
+    });
   }
 };
 
