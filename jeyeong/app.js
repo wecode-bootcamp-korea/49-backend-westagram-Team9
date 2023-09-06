@@ -2,6 +2,7 @@ const http = require("http");
 const express = require("express");
 const dotenv = require("dotenv");
 const { DataSource } = require("typeorm");
+const jwt = require("jsonwebtoken");
 
 dotenv.config();
 
@@ -95,6 +96,51 @@ const createUser = async (req, res) => {
 };
 
 app.post("/users", createUser);
+
+// 로그인
+const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      const error = new Error("KEY_ERROR");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const existingUser = await myDataSource.query(`
+      SELECT email, password FROM users WHERE email = '${email}'
+    `);
+
+    const { email: emailData, password: passwordData } = existingUser[0];
+
+    if (!emailData) {
+      const error = new Error("EMAIL_DOES_NOT_EXIST");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    if (password !== passwordData) {
+      const error = new Error("PASSWORD_DOES_NOT_MATCH");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const token = jwt.sign({ id: email }, process.env.SECRET_KEY);
+
+    return res.status(200).json({
+      message: "LOGIN_SUCCESS",
+      accessToken: token
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(error.statusCode).json({
+      message: error.message
+    });
+  }
+};
+
+app.post("/login", login);
 
 // 3. post 생성
 const createPost = async (req, res) => {
