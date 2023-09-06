@@ -4,6 +4,7 @@ const dotenv = require('dotenv')
 const { DataSource } = require('typeorm');  //타입ORM 객체 생성
 const mysql = require("mysql2");
 const { errorMonitor } = require('events');
+// const jwt = require('jsonwebtoken')
 dotenv.config();
 
 // const myDataSource = new DataSource({
@@ -55,6 +56,7 @@ app.get('/users', async(req, res) => {
     })
 	}
 })
+
 //2. users 생성
 app.post("/users", async(req, res) => {
 	try {
@@ -68,13 +70,8 @@ app.post("/users", async(req, res) => {
     const email = me.email
     // const {name, password, email} = me   위의 선언과 같은 의미 대신 객체선언값이 같아야한다! // 구조분해할당
     
-    // 예외 처리 시작
+    //////// 예외 처리 시작 ////////
     // 위 세개의 값이 다 입력 되었는지?
-    if (email === undefined || name === undefined || password === undefined) {
-      const error = new Error("KEY_ERROR")
-      error.statusCode = 400
-      throw error
-    }
     //key값이 안들어 간 것과 key 자체가 들어가지 않았을 때 둘은 다른 오류다
     // {
     //   "name": "JasonPark",
@@ -87,6 +84,11 @@ app.post("/users", async(req, res) => {
     //   "email" : "",
     // } 이것은 비어있다고 표현 된다.
     // 이 둘은 다른 오류라는 뜻이다.
+    if (email === undefined || name === undefined || password === undefined) {
+      const error = new Error("KEY_ERROR")
+      error.statusCode = 400
+      throw error
+    }
 
     // (필수) 비밀번호가 너무 짧을 때
     if (password.length < 8) {
@@ -103,6 +105,7 @@ app.post("/users", async(req, res) => {
       WHERE email LIKE '${email}';
     `)
     // 객체가 비어있다면 중복되는 이메일 없음 하지만 하나라도 있다면 중복
+    // Object key로 되어있을지
     if (!(Object.keys(emaildata).length === 0)) {
       const error = new Error("DUPLICATED_EMAIL_ADDRESS")
       error.statusCode = 400
@@ -118,7 +121,7 @@ app.post("/users", async(req, res) => {
       error.statusCode = 400
       throw error
     }
-
+    //// 유저 생성 
     const userData = await myDataSource.query(`
       INSERT INTO users(
         name,
@@ -140,10 +143,57 @@ app.post("/users", async(req, res) => {
       "message ": "userCreated"   //정상적으로 생성 되었음을 알려줌
 		})
 	} catch (err) {
-		console.log(err)
+    return res.status(error.statusCode).json({
+      "message": error.message
+    })
 	}
 })
 
+// 로그인 기능
+app.post("/login", async(req, res) =>{
+  try{
+    const {email, password} = req.body  //로그인 정보 받아옴
+    
+    //////// 예외 처리 시작 ////////
+    //이메일 비밀번호 key error확인
+    if(email === undefined || password === undefined){
+      const error = new Error("KEY_ERROR")
+      error.statusCode = 400
+      throw error
+    }
+    //이메일이 등록되어있는지 확인
+    //없으면 Error
+    const user_data = await myDataSource.query(`
+    SELECT id, name, email, password 
+    FROM users 
+    WHERE name = '${email}';` )
+    if(user_data.length == 0){
+      const error = new Error("UNKWON_ID")
+      error.statusCode = 400
+      throw error
+    }
+    //비밀번호 비교
+    //유저의 비밀번호와 데이터베이스 비밀번호가 같은지 비교
+    //다르면 Error
+    if (user_data.password != password){
+      const error = new Error("INCORRECT_PASSWORD")
+      error.statusCode = 400
+      throw error
+    }
+
+    // generate token
+    //1. use library allowing generating token
+    //2. {"id"} //1hour
+    const token = jwt.sign({id: email}, 'sceret key')
+    //3. signiture
+    return res.status(200).json({
+      "message" : "LOGIN_SUCCESS",
+      "accessToken" : token
+    })
+  }catch(err){
+    console.log(err)
+  }
+})
 
 // 과제 3 DELETE 
 // 가장 마지막 user를 삭제하는 엔드포인트

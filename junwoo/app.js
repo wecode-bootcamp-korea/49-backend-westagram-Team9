@@ -51,6 +51,7 @@ app.get('/users', async(req, res) => {
 		console.log(error)
 	}
 })
+
 //2. users 생성
 app.post("/users", async(req, res) => {
 	try {
@@ -218,7 +219,7 @@ app.put("/posts/user", async(req, res) => {
     //   "posting_id" : 1,  post번호를 직접 받아온다.
     //   "content": "바뀐 컨텐츠 입니다..."
     // }
-    const {user_id, posting_id, content} = me
+    const {user_id, postingId:posting_id, content} = me
 
     const postData = await myDataSource.query(`
     UPDATE posts SET content = '${content}' WHERE id = '${posting_id}';
