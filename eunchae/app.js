@@ -83,8 +83,7 @@ const userCreate = async(req, res) => {
       error.statusCode = 400;
       throw error;
     }
-
-    await myDataSource.query(`INSERT INTO users (name, email, password) VALUES ('${name}', '${email}', '${password}')`,
+   await myDataSource.query(`INSERT INTO users (name, email, password) VALUES ('${name}', '${email}', '${password}')`,
     (err, rows) => {
       return res.status(201).json({ message: "userCreated" });
     });
@@ -93,10 +92,6 @@ const userCreate = async(req, res) => {
     return res.status(err.statusCode).json({ message: err.message });
   }
 }
-
-app.get('/', test);
-app.get('/user', users);
-app.post('/user', userCreate);
 
 const port = 8000;
 app.listen(port, () => {
