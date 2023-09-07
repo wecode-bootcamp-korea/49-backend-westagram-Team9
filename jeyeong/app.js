@@ -115,7 +115,7 @@ const login = async (req, res) => {
     const { email: emailData, password: passwordData } = existingUser[0];
 
     if (!emailData) {
-      const error = new Error("EMAIL_DOES_NOT_EXIST");
+      const error = new Error("ACCOUNT_DOES_NOT_EXIST");
       error.statusCode = 404;
       throw error;
     }
