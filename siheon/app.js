@@ -79,7 +79,7 @@ const loginUsers = async(req, res) => {
   try {  
     const {email, password} = req.body
     const userData = await myDataSource.query(`SELECT * FROM users WHERE email='${email}'`)
-
+    const user = userData[0]
      // email, password KEY_ERROR 확인
      if (!email || !password) {
         const error = new Error("KEY_ERROR")
@@ -93,7 +93,7 @@ const loginUsers = async(req, res) => {
        error.statusCode=400
         throw error
      }
-     const user = userData[0];
+     
      if (password !== user.password ){
         const error = new Error("INVALID_PASSWORD")
         error.statusCode=400
@@ -108,6 +108,8 @@ const loginUsers = async(req, res) => {
     "accessToken" : token
     })
 	} catch (error) {
+    return res.status(400).json( {  "message" : error.message
+    })
 		console.log(error)
 	}
 }
