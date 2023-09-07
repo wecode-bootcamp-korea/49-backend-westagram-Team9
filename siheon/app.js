@@ -1,8 +1,9 @@
 const http = require('http')
 const express = require('express')
 const dotenv = require("dotenv")
-
+const jwt = require('jsonwebtoken')
 const { DataSource } = require('typeorm');
+const { error } = require('console');
 dotenv.config()
 const app = express()
 
@@ -30,6 +31,88 @@ app.get("/", async(req, res) => {
   }
 })
 
+//0. 로그인 하기
+/*
+// 로그인
+app.post("/login", async(req, res) => {
+  try {
+    1
+    const email = req.body.email
+    const password = req.body.password
+    // { email, password } = req.body
+    2
+
+    // email, password KEY_ERROR 확인
+    3
+
+    // Email 가진 사람 있는지 확인
+    // if 없으면 -> Error
+    // 있으면 -> 정상 진행
+    4
+
+    // Password 비교
+    // 유저가 입력한 password === DB에서 가져온 PASSword
+    // if 다르면 -> Error
+    // 같으면 -> 정상 진행
+
+    5 // generate token
+    // 1. use library allowing generating token
+    // 2. {"id": 10} // 1hour
+    const token = jwt.sign({id:____}, 'scret_key')
+    // 3. signature 
+
+    return res.status(200).json({ 
+      "message" : "LOGIN_SUCCESS",
+      "accessToken" : token
+    })
+    6
+
+  } catch (error) {
+    console.log(error)
+  }
+}) */
+
+
+
+const loginUsers = async(req, res) => {
+  
+  try {  
+    const {email, password} = req.body
+    const userData = await myDataSource.query(`SELECT * FROM users WHERE email='${email}'`)
+
+     // email, password KEY_ERROR 확인
+     if (!email || !password) {
+        const error = new Error("KEY_ERROR")
+        error.statusCode=400
+        throw error
+     }
+
+     
+     if ( userData.length === 0){
+       const error = new Error("EMAIL_DOES_NOT_EXIST_IN_DATABASE")
+       error.statusCode=400
+        throw error
+     }
+     const user = userData[0];
+     if (password !== user.password ){
+        const error = new Error("INVALID_PASSWORD")
+        error.statusCode=400
+        throw error
+     }
+
+     const token = jwt.sign({id: user.id}, 'secret_key')
+     const decoded = jwt.verify(token, 'secret_key')
+     console.log(decoded)
+
+    return res.status(200).json( {  "message" : "LOGIN_SUCCESS",
+    "accessToken" : token
+    })
+	} catch (error) {
+		console.log(error)
+	}
+}
+app.post('/login',loginUsers)
+
 
 //1. API 로 users 화면에 보여주기
 const getUsers = async(req, res) => {
@@ -50,13 +133,6 @@ app.get('/users',getUsers)
 
 //2. users 생성
 
-/*
-[진행 필수 사항]
-GET /users 만들기
-getUsers 함수로 분리해서 만듭니다.
-POST /users 만들기
-createUser 함수로 분리해서 만듭니다.
-request body에서 사용자 정보를 받아와서 만듭니다.*/
 
 
 const createUser = async(req, res) => {
@@ -79,18 +155,30 @@ const createUser = async(req, res) => {
 
      //3.이메일이 중복되어 이미 가입된경우
     const emailData = await myDataSource.query(`SELECT users.email FROM users WHERE users.email='${email}'`)
-     if (emailData==ㄹ ){
+     if (emailData.length > 0 ){
       const error = new Error("DUPLICATED_EMAIL_ADDRESS")
       error.statusCode=400
       throw error
      }
 
+
+      // 4. 특수문자가 빠진경우
+      
+      // if (userPassword){
+      //   const error = new Error("DUPLICATED_EMAIL_ADDRESS")
+      //   error.statusCode=400
+      //   throw error
+      // }
+
+
      await myDataSource.query(`INSERT INTO users (name, email, profile_image, password) VALUES ('${name}', '${email}', '${profile_image}', '${password}')`)
     const userData = await myDataSource.query(`SELECT * FROM USERS`)
     console.log(userData)
    return res.status(200).json( { "userData :":userData})
-    	} catch (err) {
+    	} catch (err) { 
+        return res.status(400).json( { "message :":err})
     		console.log(err)
+
     	}
     }
 
@@ -198,9 +286,10 @@ const updateUserPosts = async(req, res) => {
    const {id, user_id, title, content} = req.body
    await myDataSource.query(`UPDATE posts SET title = '${title}', content = '${content}' WHERE id='${id}' and user_id= '${user_id}'`)
    const updateData = await myDataSource.query(
-    `SELECT users.Id AS userId, users.name AS userName, posts.id AS postingId, 
+    `SELECT users.id AS userId, users.name AS userName, posts.id AS postingId, 
     posts.title AS postingTitle, posts.content AS postingContent 
-    FROM users INNER JOIN posts ON posts.user_id = users.id WHERE posts.id='${id}' and posts.user_id= '${user_id}'`);
+    FROM users INNER JOIN posts ON posts.user_id = users.id
+     WHERE posts.id='${id}' and posts.user_id= '${user_id}'`);
    console.log(updateData)
     return res.status(200).json({ data: updateData
     })
@@ -245,6 +334,21 @@ const likesUser = async(req, res) => {
 }
 app.post('/likes/:id', likesUser)
 
+
+
+//로그인 하는 경우
+// const  = async(req, res) => {
+  
+//   try {  
+//     const userData = await myDataSource.query()
+//     return res.status(200).json( { 
+//     })
+// 	} catch (error) {
+// 		console.log(error)
+// 	}
+// }
+// app.get('/users',getUsers)
+
 const server = http.createServer(app) // express app 으로 서버를 만듭니다.
 
 const start = async () => { // 서버를 시작하는 함수입니다.
@@ -257,3 +361,4 @@ const start = async () => { // 서버를 시작하는 함수입니다.
 }
 
 start()
+
