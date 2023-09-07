@@ -1,5 +1,6 @@
 const http = require("http");
 const express = require("express");
+const cors = require("cors");
 const dotenv = require("dotenv");
 const { DataSource } = require("typeorm");
 const jwt = require("jsonwebtoken");
@@ -19,6 +20,7 @@ myDataSource.initialize().then(() => console.log("Data Source has been initializ
 
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 
 const getIndex = async (req, res) => {
@@ -50,7 +52,7 @@ app.get("/users", getUsers);
 // 2. user 생성
 const createUser = async (req, res) => {
   try {
-    const { name, email, profileImage, password } = req.body;
+    const { name = "기본", email, profileImage = "기본", password } = req.body;
 
     // email, name, password가 다 입력되지 않은 경우
     if (!email || !name || !password) {
@@ -108,19 +110,17 @@ const login = async (req, res) => {
       throw error;
     }
 
-    const existingUser = await myDataSource.query(`
+    const [existingUser] = await myDataSource.query(`
       SELECT email, password FROM users WHERE email = '${email}'
     `);
 
-    const { email: emailData, password: passwordData } = existingUser[0];
-
-    if (!emailData) {
+    if (!existingUser) {
       const error = new Error("ACCOUNT_DOES_NOT_EXIST");
       error.statusCode = 404;
       throw error;
     }
 
-    if (password !== passwordData) {
+    if (password !== existingUser.password) {
       const error = new Error("PASSWORD_DOES_NOT_MATCH");
       error.statusCode = 400;
       throw error;
@@ -128,6 +128,7 @@ const login = async (req, res) => {
 
     const token = jwt.sign({ id: email }, process.env.SECRET_KEY);
 
+    console.log(email, password);
     return res.status(200).json({
       message: "LOGIN_SUCCESS",
       accessToken: token
