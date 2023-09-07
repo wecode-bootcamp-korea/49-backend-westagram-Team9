@@ -2,6 +2,7 @@ const http = require('http');
 const express = require('express');
 const dotenv = require('dotenv');
 const { DataSource } = require('typeorm');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 app.use(express.json());
@@ -67,7 +68,7 @@ const userCreate = async(req, res) => {
     }
 
     // 중복된 이메일이 있을 때
-    const emailCheck = await myDataSource.query(`SELECT * FROM users WHERE email LIKE '${email}'`);
+    const emailCheck = await myDataSource.query(`SELECT email FROM users WHERE email LIKE '${email}'`);
 
     if (emailCheck.length !== 0) {
       const error = new Error('DUPLICATE_EMAIL');
@@ -92,6 +93,59 @@ const userCreate = async(req, res) => {
     return res.status(err.statusCode).json({ message: err.message });
   }
 }
+
+const login = async(req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    // email, password 키에러 확인
+    if (name === undefined || email === undefined || password === undefined) {
+      const error = new Error('KEY_ERROR');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // email 가진 사람 있는지 확인
+    // if 없으면 error
+    // 있으면 정상진행
+    const DBcheck = await myDataSource.query(`SELECT email, password FROM users WHERE email = '${email}'`);
+    if (DBcheck.length == 0) {
+      const error = new Error('NOT_FOUND_EMAIL');
+      error.stautsCode = 400;
+      throw error;
+    }
+
+    // password 비교
+    // 유저가 입력한 password === DB에서 가져온 password
+    // if 다르면 error
+    // 있으면 정상진행
+    const passwordCheck = DBcheck[0].password;
+    if (password !== passwordCheck) {
+      const error = new Error('INVALID_PASSWORD');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // generate token
+    // 1. use library allowing generating token
+    // 2. {"id" : 10} :: 1hour
+    // 3. signature
+
+    const token = jwt.sign({ "id": 10 }, 'scret_key');
+    return res.status(200).json({
+      "message" : "LOGIN_SUCCESS",
+      "accessToken" : token
+    });
+  } catch(err) {
+    console.log(err);
+    return res.status(err.statusCode).json({ "message" : err.message });
+  }
+}
+
+app.get('/', test);
+app.get('/user', users);
+app.post('/user', userCreate);
+app.post('/user/login', login);
 
 const port = 8000;
 app.listen(port, () => {
