@@ -8,5 +8,14 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "cors": "^2.8.5"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^9.0.2",
+    "mysql": "^2.18.1",
+    "mysql2": "^3.6.0",
+    "typeorm": "^0.3.17"
+  }
 }
