@@ -127,10 +127,8 @@ const login = async(req, res) => {
         throw error;
       } else if (result === true) {
         const token = jwt.sign({ "id": userCheck[0].id }, 'scret_key');
-        return res.status(200).json({
-          "message" : "LOGIN_SUCCESS",
-          "accessToken" : token
-        });
+        res.header('Authorization', `Bearer ${token}`);
+        res.status(200).json({ "message" : "LOGIN_SUCCESS" });
       }
     });
 
